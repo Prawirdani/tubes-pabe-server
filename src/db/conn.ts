@@ -7,7 +7,7 @@ const pg = postgres({
     host: process.env.DB_HOST ?? 'localhost',
     database: process.env.DB_NAME ?? 'test',
     username: process.env.DB_USER ?? 'postgres',
-    password: process.env.DB_PASS ?? '',
+    password: process.env.DB_PASSWORD ?? '',
     port: Number(process.env.DB_PORT) ?? 5432,
 });
 

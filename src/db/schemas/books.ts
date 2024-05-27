@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { serial, varchar, timestamp, pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { serial, bigint, varchar, timestamp, pgTable, text, integer } from 'drizzle-orm/pg-core';
 
 export const authors = pgTable('authors', {
     id: serial('id').primaryKey(),
@@ -20,6 +20,8 @@ export const books = pgTable('books', {
     authorId: integer('author_id')
         .notNull()
         .references(() => authors.id),
+    price: bigint('price', { mode: 'number' }).notNull(),
+    image: varchar('image').notNull(),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
 });

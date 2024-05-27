@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
-import { ErrorMiddleware } from './middleware/error';
 import { MakeResponse } from './utils/response';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import apiRoute from './controller/routes';
+import { ErrorHandler } from './controller/middleware/error';
 
 const app = express();
 
@@ -22,7 +22,7 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
 
 app.use(apiRoute);
 
-app.use(ErrorMiddleware);
+app.use(ErrorHandler);
 
 const APP_PORT = process.env.APP_PORT ?? 3000;
 app.listen(APP_PORT, () => {

@@ -3,8 +3,9 @@ import authService from '../service/auth_service';
 import { validateRequest } from '../utils/validator';
 import { authLoginSchema, authRegisterSchema } from '../schemas/auth_schema';
 import { MakeResponse } from '../utils/response';
+import { Authenticate } from './middleware/authenticate';
 
-const registerController = async (req: Request, res: Response, next: NextFunction) => {
+const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
         validateRequest(authRegisterSchema, req);
         const { nama, email, password } = req.body;
@@ -17,17 +18,32 @@ const registerController = async (req: Request, res: Response, next: NextFunctio
     }
 };
 
-const loginController = async (req: Request, res: Response, next: NextFunction) => {
+const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
         validateRequest(authLoginSchema, req);
         const { email, password } = req.body;
 
-        const token = await authService.login({ email, password });
+        const { ...tokens } = await authService.login({ email, password });
 
-        const resBody = {
-            token: token,
-        };
-        res.status(200).json(MakeResponse(resBody, 'Berhasil login!'));
+        res.status(200).json(MakeResponse(tokens, 'Berhasil login!'));
+    } catch (error) {
+        next(error);
+    }
+};
+
+const currentUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.status(200).json(MakeResponse(req.user, 'Berhasil mendapatkan data user'));
+    } catch (error) {
+        next(error);
+    }
+};
+
+const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user.id;
+        const { ...tokens } = await authService.refreshToken(userId!);
+        res.status(200).json(MakeResponse(tokens, 'Berhasil refresh token'));
     } catch (error) {
         next(error);
     }
@@ -35,7 +51,8 @@ const loginController = async (req: Request, res: Response, next: NextFunction) 
 
 const authRoute = Router();
 
-authRoute.post('/auth/register', registerController);
-authRoute.post('/auth/login', loginController);
-
+authRoute.post('/auth/register', register);
+authRoute.post('/auth/login', login);
+authRoute.get('/auth/current', Authenticate(), currentUser);
+authRoute.get('/auth/refresh', Authenticate('refresh'), refresh);
 export default authRoute;

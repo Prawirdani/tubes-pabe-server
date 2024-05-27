@@ -12,6 +12,7 @@ export function ErrorMiddleware(
             error: {
                 status: err.status,
                 message: err.message,
+                details: err.details,
             },
         });
     } else {
@@ -20,4 +21,7 @@ export function ErrorMiddleware(
 }
 
 export const ErrNotFound = (msg: string) => new ApiError(msg, 404);
-export const ErrBadRequest = (msg: string) => new ApiError(msg, 400);
+export const ErrBadRequest = (msg: string, details?: any) =>
+    new ApiError(msg, 400, details);
+export const ErrInternalServer = () =>
+    new ApiError('Internal Server Error', 500);

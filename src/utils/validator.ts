@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { ZodError, z } from 'zod';
-import { ErrBadRequest, ErrInternalServer } from '../middleware/error';
+import { ErrBadRequest, ErrInternalServer } from '../utils/error';
 
 export function validateRequest(schema: z.ZodObject<any, any>, req: Request) {
     try {

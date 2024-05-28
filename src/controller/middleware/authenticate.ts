@@ -5,12 +5,22 @@ import { verifyToken } from '../../utils/jwt';
 function Authenticate(type: 'access' | 'refresh' = 'access') {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
+      var token = '';
+
       const authHeader = req.headers.authorization;
-      if (!authHeader) {
+      // Retrieve the token from the Authorization header, if not present try to get it from the cookies
+      if (authHeader) {
+        token = authHeader.split(' ')[1];
+      } else {
+        const cookieName = type === 'access' ? 'accessToken' : 'refreshToken';
+        token = req.cookies[cookieName] || '';
+      }
+
+      // If the token is empty, throw an error
+      if (token === '') {
         throw ErrUnauthorized('Missing auth token');
       }
 
-      const token = authHeader.split(' ')[1];
       const decoded = verifyToken(token);
 
       // Check if the token type is the same as the expected type

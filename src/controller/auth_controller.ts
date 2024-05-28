@@ -11,6 +11,7 @@ authRoute.post('/auth/register', register);
 authRoute.post('/auth/login', login);
 authRoute.get('/auth/current', AuthAccessToken, currentUser);
 authRoute.get('/auth/refresh', AuthRefreshToken, refresh);
+authRoute.delete('/auth/logout', logout);
 export default authRoute;
 
 async function register(req: Request, res: Response, next: NextFunction) {
@@ -59,6 +60,16 @@ async function refresh(req: Request, res: Response, next: NextFunction) {
     setTokenCookie(res, tokens.refreshToken, 'refresh');
 
     res.status(200).json(MakeResponse(tokens, 'Berhasil refresh token'));
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function logout(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    res.status(200).json(MakeResponse(null, 'Berhasil logout!'));
   } catch (error) {
     next(error);
   }

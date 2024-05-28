@@ -1,5 +1,5 @@
 import { Router, NextFunction, Request, Response } from 'express';
-import db from '../db/conn';
+import db from '../db';
 import { MakeResponse } from '../utils/response';
 import { validateRequest } from '../utils/validator';
 import { BookCreateSchema, bookCreateSchema } from '../schemas/book_schema';

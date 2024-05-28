@@ -1,6 +1,6 @@
 import { Router, NextFunction, Request, Response } from 'express';
 import { MakeResponse } from '../utils/response';
-import db from '../db/conn';
+import db from '../db';
 import { AuthAccessToken } from './middleware/authenticate';
 
 const userRoute = Router();

@@ -65,6 +65,14 @@ async function updateBook(req: Request, res: Response, next: NextFunction) {
     validateRequest(bookCreateSchema, req);
     const request = req.body as BookCreateSchema;
 
+    const book = await db.query.books.findFirst({
+      where: eq(books.id, bookId),
+    });
+
+    if (!book) {
+      throw ErrNotFound('Buku tidak ditemukan');
+    }
+
     // Check if author exists
     const author = await db.query.authors.findFirst({
       where: eq(authors.id, req.body.authorId),
@@ -75,9 +83,17 @@ async function updateBook(req: Request, res: Response, next: NextFunction) {
     }
 
     // Update book
-    const updatedBook = await db.update(books).set(request).where(eq(books.id, bookId)).returning();
+    const updatedAt = new Date();
+    const updatedBook = await db
+      .update(books)
+      .set({
+        ...request,
+        updatedAt,
+      })
+      .where(eq(books.id, bookId))
+      .returning();
 
-    res.status(200).json(MakeResponse(updatedBook, 'Buku berhasil diupdate'));
+    res.status(200).json(MakeResponse(updatedBook[0], 'Buku berhasil diupdate'));
   } catch (error) {
     next(error);
   }

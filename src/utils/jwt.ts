@@ -9,7 +9,6 @@ export function generateToken(payload: any, type: 'access' | 'refresh' = 'access
       ? `${process.env.ACCESS_TOKEN_EXPIRES}m` ?? '1h'
       : `${process.env.REFRESH_TOKEN_EXPIRES}d` ?? '7d';
 
-  console.log('expiresIn', expiresIn);
   // Add token type to payload
   payload['type'] = type;
 

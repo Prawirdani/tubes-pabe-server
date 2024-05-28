@@ -130,7 +130,6 @@ function parseBookSearchQuery(req: Request): SQL<unknown> | undefined {
 
   // search by book title /api/books?title=value
   if (query.title) {
-    console.log(query.title);
     conditions.push(ilike(books.title, `%${query.title}%`));
   }
 

@@ -4,21 +4,22 @@ import { ErrUnauthorized } from './error';
 
 const secret = process.env.JWT_SECRET ?? 'secret';
 export function generateToken(payload: any, type: 'access' | 'refresh' = 'access') {
-    const expiresIn =
-        type === 'access'
-            ? process.env.ACCESS_TOKEN_EXPIRES ?? '1h'
-            : process.env.REFRESH_TOKEN_EXPIRES ?? '7d';
+  const expiresIn =
+    type === 'access'
+      ? `${process.env.ACCESS_TOKEN_EXPIRES}m` ?? '1h'
+      : `${process.env.REFRESH_TOKEN_EXPIRES}d` ?? '7d';
 
-    // Add token type to payload
-    payload['type'] = type;
+  console.log('expiresIn', expiresIn);
+  // Add token type to payload
+  payload['type'] = type;
 
-    return jsonwebtoken.sign(payload, secret, { expiresIn });
+  return jsonwebtoken.sign(payload, secret, { expiresIn });
 }
 
 export function verifyToken(token: string) {
-    try {
-        return jsonwebtoken.verify(token, secret) as JwtPayload;
-    } catch (error) {
-        throw ErrUnauthorized('Invalid or expired token');
-    }
+  try {
+    return jsonwebtoken.verify(token, secret) as JwtPayload;
+  } catch (error) {
+    throw ErrUnauthorized('Invalid or expired token');
+  }
 }

@@ -16,7 +16,7 @@ export default authRoute;
 
 async function register(req: Request, res: Response, next: NextFunction) {
   try {
-    validateRequest(authRegisterSchema, req);
+    validateRequest(authRegisterSchema, req.body);
     const { nama, email, password } = req.body;
 
     const newUser = await authService.register({ nama, email, password });
@@ -29,7 +29,7 @@ async function register(req: Request, res: Response, next: NextFunction) {
 
 async function login(req: Request, res: Response, next: NextFunction) {
   try {
-    validateRequest(authLoginSchema, req);
+    validateRequest(authLoginSchema, req.body);
     const { email, password } = req.body;
 
     const { ...tokens } = await authService.login({ email, password });

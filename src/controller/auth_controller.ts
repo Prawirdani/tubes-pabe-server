@@ -44,7 +44,7 @@ async function login(req: Request, res: Response, next: NextFunction) {
 
 async function currentUser(req: Request, res: Response, next: NextFunction) {
   try {
-    res.status(200).json(MakeResponse(req.user, 'Berhasil mendapatkan data user'));
+    res.status(200).json(MakeResponse(req.user, 'User authenticated.'));
   } catch (error) {
     next(error);
   }

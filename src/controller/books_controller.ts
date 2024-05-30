@@ -8,7 +8,7 @@ import { validateRequest } from '../utils/validator';
 import { authors, books } from '../db/schemas/books';
 import { MakeResponse } from '../utils/response';
 import { uploader } from './middleware/uploader';
-import { eq } from 'drizzle-orm';
+import { eq, getTableColumns } from 'drizzle-orm';
 import path from 'path';
 import db from '../db';
 
@@ -22,19 +22,18 @@ export default booksRoute;
 async function getBooks(req: Request, res: Response, next: NextFunction) {
   try {
     const search = parseBookSearchQuery(req);
-    const books = await db.query.books.findMany({
-      where: search,
-      with: {
+    const { createdAt, updatedAt, ...authorCols } = getTableColumns(authors);
+    const booksData = await db
+      .select({
+        ...getTableColumns(books),
         author: {
-          columns: {
-            id: true,
-            name: true,
-            bio: true,
-          },
+          ...authorCols,
         },
-      },
-    });
-    res.status(200).json(MakeResponse(books));
+      })
+      .from(books)
+      .fullJoin(authors, eq(books.authorId, authors.id))
+      .where(search);
+    res.status(200).json(MakeResponse(booksData));
   } catch (error) {
     next(error);
   }

@@ -1,10 +1,20 @@
-import { validateRequest } from '../utils/validator';
-import { authLoginSchema, authRegisterSchema } from '../schemas/auth_schema';
-import { MakeResponse } from '../utils/response';
-import { AuthAccessToken, AuthRefreshToken } from './middleware/authenticate';
+import db from '../db';
+import bcrypt from 'bcrypt';
+import {
+  AuthLoginSchema,
+  AuthRegisterSchema,
+  authLoginSchema,
+  authRegisterSchema,
+} from '../schemas/auth_schema';
 import { Router, NextFunction, Request, Response } from 'express';
-import authService from '../service/auth_service';
+import { AuthAccessToken, AuthRefreshToken } from './middleware/authenticate';
+import { ErrConflict, ErrUnauthorized } from '../utils/error';
+import { eq, getTableColumns } from 'drizzle-orm';
+import { validateRequest } from '../utils/validator';
 import { setTokenCookie } from '../utils/cookies';
+import { generateToken } from '../utils/jwt';
+import { MakeResponse } from '../utils/response';
+import { users } from '../db/schemas/users';
 
 const authRoute = Router();
 authRoute.post('/auth/register', register);
@@ -17,11 +27,32 @@ export default authRoute;
 async function register(req: Request, res: Response, next: NextFunction) {
   try {
     validateRequest(authRegisterSchema, req.body);
-    const { nama, email, password } = req.body;
+    const request = req.body as AuthRegisterSchema;
 
-    const newUser = await authService.register({ nama, email, password });
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, request.email),
+    });
 
-    res.status(201).json(MakeResponse(newUser, 'User created'));
+    if (user) {
+      throw ErrConflict('Email yang sama sudah terdaftar!');
+    }
+
+    const hashedPassword = await bcrypt.hash(request.password, 10);
+
+    const { password, ...rest } = getTableColumns(users); // Omit password from returning query
+
+    const newUser = await db
+      .insert(users)
+      .values({
+        nama: request.nama,
+        email: request.email,
+        password: hashedPassword,
+      })
+      .returning({
+        ...rest,
+      });
+
+    res.status(201).json(MakeResponse(newUser, 'Berhasil register pengguna!'));
   } catch (error) {
     next(error);
   }
@@ -30,14 +61,29 @@ async function register(req: Request, res: Response, next: NextFunction) {
 async function login(req: Request, res: Response, next: NextFunction) {
   try {
     validateRequest(authLoginSchema, req.body);
-    const { email, password } = req.body;
+    const request = req.body as AuthLoginSchema;
 
-    const { ...tokens } = await authService.login({ email, password });
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, request.email),
+    });
 
-    setTokenCookie(res, tokens.accessToken, 'access');
-    setTokenCookie(res, tokens.refreshToken, 'refresh');
+    if (!user || !(await bcrypt.compare(request.password, user.password!))) {
+      throw ErrUnauthorized('Periksa kembali email dan password Anda');
+    }
 
-    res.status(200).json(MakeResponse(tokens, 'Berhasil login!'));
+    const { password, createdAt, updatedAt, ...payload } = user; // Omit password, createdAt and updatedAt from user object
+    const accessToken = generateToken(payload);
+    const refreshToken = generateToken({ id: payload.id }, 'refresh');
+
+    setTokenCookie(res, accessToken, 'access');
+    setTokenCookie(res, refreshToken, 'refresh');
+
+    const resBody = {
+      accessToken,
+      refreshToken,
+    };
+
+    res.status(200).json(MakeResponse(resBody, 'Berhasil login!'));
   } catch (error) {
     next(error);
   }
@@ -54,12 +100,28 @@ async function currentUser(req: Request, res: Response, next: NextFunction) {
 async function refresh(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user.id;
-    const { ...tokens } = await authService.refreshToken(userId!);
 
-    setTokenCookie(res, tokens.accessToken, 'access');
-    setTokenCookie(res, tokens.refreshToken, 'refresh');
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
 
-    res.status(200).json(MakeResponse(tokens, 'Berhasil refresh token'));
+    if (!user) {
+      throw ErrUnauthorized('User not found');
+    }
+
+    const { password, createdAt, updatedAt, ...payload } = user; // Omit password, createdAt and updatedAt from user object
+    const accessToken = generateToken(payload);
+    const refreshToken = generateToken({ id: payload.id }, 'refresh');
+
+    setTokenCookie(res, accessToken, 'access');
+    setTokenCookie(res, refreshToken, 'refresh');
+
+    const resBody = {
+      accessToken,
+      refreshToken,
+    };
+
+    res.status(200).json(MakeResponse(resBody, 'Berhasil refresh token'));
   } catch (error) {
     next(error);
   }

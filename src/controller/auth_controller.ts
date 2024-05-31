@@ -17,8 +17,8 @@ import { MakeResponse } from '../utils/response';
 import { users } from '../db/schemas/users';
 
 const authRoute = Router();
-authRoute.post('/auth/register', register);
 authRoute.post('/auth/login', login);
+authRoute.post('/auth/register', AuthAccessToken, register);
 authRoute.get('/auth/current', AuthAccessToken, currentUser);
 authRoute.get('/auth/refresh', AuthRefreshToken, refresh);
 authRoute.delete('/auth/logout', logout);

@@ -6,12 +6,13 @@ import { AuthorSchema, authorSchema } from '../schemas/author_schema';
 import { authors, books } from '../db/schemas/books';
 import { count, eq, getTableColumns } from 'drizzle-orm';
 import { ErrNotFound } from '../utils/error';
+import { AuthAccessToken } from './middleware/authenticate';
 
 const authorRoute = Router();
 authorRoute.get('/authors', getAuthors);
-authorRoute.post('/authors', createAuthor);
-authorRoute.put('/authors/:id', updateAuthor);
-authorRoute.delete('/authors/:id', deleteAuthor);
+authorRoute.post('/authors', AuthAccessToken, createAuthor);
+authorRoute.put('/authors/:id', AuthAccessToken, updateAuthor);
+authorRoute.delete('/authors/:id', AuthAccessToken, deleteAuthor);
 export default authorRoute;
 
 async function getAuthors(req: Request, res: Response, next: NextFunction) {
